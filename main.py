@@ -92,11 +92,6 @@ except:
 
  #========================== Command Methods =====================================================
 
-async def command_sayHi(message):
-    pass
-    # await message.channel.send("Hi!")
-
-
 async def command_uploadLinks(message):
     if str(message.author.id) != ADMIN:
         await message.channel.send("You do not have the permissions to use this command")
@@ -111,8 +106,8 @@ async def command_uploadLinks(message):
     links = r.text.split('\n')
     links = [link.strip() for link in links if link.strip()]
 
-    for link in links:
-        print(f"{link}\n")
+    # for link in links:
+    #     print(f"{link}\n")
 
     with database:
         for link in links:
@@ -120,6 +115,7 @@ async def command_uploadLinks(message):
 
 
     print(f"Added {len(links)} links to tickets")
+    message.channel.send(f"Added {len(links)} links!")
 
 
 async def command_vote(message):
@@ -131,7 +127,7 @@ async def command_vote(message):
         else:
             print("WARNING: Is public", flush=True)
             await message.channel.send("ERROR: Command can only be used in DM's.")
-            # return
+            return
 
         # check user has not voted before
         output = database.execute("SELECT id FROM voters WHERE id=?", (str(message.author.id),)).fetchall()
@@ -141,8 +137,7 @@ async def command_vote(message):
             await message.channel.send(""" 
                 You have already received your voting link. You cannot get another one. If you were unable to vote with the link you were given or if this is the first time you have requested a link, please contact Graydon Bush, username TheManaDorh
                 """)
-            if str(message.author.id) != ADMIN:
-                return
+            return
 
         # retrieve voting link and mark link as used
         output = database.execute("UPDATE tickets SET used = TRUE WHERE link = (SELECT link FROM tickets WHERE used = FALSE LIMIT 1) RETURNING link;").fetchone()
@@ -180,64 +175,83 @@ For details on the system of voting we are using please use the command '/info'
 
 
 
-async def command_getData(message):
-    with database:
-        rows = database.execute("SELECT * FROM tickets LIMIT 10").fetchall()
+# async def command_getData(message):
+#     if str(message.author.id) != ADMIN:
+#         await message.channel.send("You do not have the permissions to use this command")
+#         return
+#     with database:
+#         rows = database.execute("SELECT * FROM tickets LIMIT 10").fetchall()
 
-    output = ""
-    for row in rows:
-        output += str(row) + "\n"
+#     output = ""
+#     for row in rows:
+#         output += str(row) + "\n"
 
-    print(output)
-    await message.channel.send(output)
+#     print(output)
+#     await message.channel.send(output)
 
 
 
 async def command_info(message):
-    await message.channel.send("ERROR: This command is incomplete. Please contact Graydon Bush to rectify this.")
+    # await message.channel.send("ERROR: This command is incomplete. Please contact Graydon Bush to rectify this.")
+    await message.channel.send("""
+We are voting to elect ***7*** moderators.
+In the first question in the form you may vote for up to ***5*** people you believe have the qualities a moderator needs (good at conflict resolution, impartial, etc). A vote of confidence.
+In the second question in the form you may vote for up to ***2*** people you believe do not have the qualities a moderator needs. A vote of no-confidence.
+These ***2*** votes will count as negative votes, so if someone have 5 votes of confidence and 2 votes of no-confidence they will be considered to have 3 total votes.
+
+At the end of the voting period, the 7 people with the highest number of total votes (total votes = # of confidence votes - # of no-confidence votes) will be our moderators.
+        """)
 
 
+async def command_numVotes(message):
+    with database:
+        rows = database.execute("SELECT used FROM tickets WHERE used=?", (True,)).fetchall()
+    await message.channel.send(f"{len(rows)} voting link(s) have been sent.")
 
-async def command_clearVoters(message):
-    print(database)
-    try:
-        with database:
-            database.execute("DELETE FROM voters")
-        await message.channel.send("Cleared voter data")
-    except Exception as e:
-        print(e)
+
+async def command_enable(message):
+    if str(message.author.id) != ADMIN:
+        await message.channel.send("You do not have the permissions to use this command")
+        return
+    global_settings["enable"] = True
+    message.channel.send("Bot commands enabled")
+
+
+async def command_disable(message):
+    if str(message.author.id) != ADMIN:
+        await message.channel.send("You do not have the permissions to use this command")
+        return
+    global_settings["disable"] = False
+    message.channel.send("Bot commands disabled")
 
 
 commands = {
-    "sayHi":{"enable":True, "func": command_sayHi},
-    "uploadLinks":{"enable":True, "func":command_uploadLinks},
+    "uploadLinks":{"enable":True, "func":command_uploadLinks}, # ADMIN only
     "vote":{"enable":True, "func":command_vote},
-    "getData":{"enable":True, "func":command_getData},
-    "clearVoters":{"enable":True, "func":command_clearVoters},
-    "info":{"enable":True, "func":command_info}
+    # "getData":{"enable":True, "func":command_getData},       # ADMIN only
+    "info":{"enable":True, "func":command_info},
+    "numVotes":{"enable":True, "func":command_numVotes},
+    "enable":{"enable":True, "func":command_enable},           # ADMIN only
+    "disable":{"enable":True, "func":command_disable}          # ADMIN only
     }
 
 
 
 #==================Message Handler======================
 
-async def go(message):
-    # print(message)
-    print(f"content:\n ({message.content})")
-    print(f"attachments:\n {message.attachments}")
-    await process_commands(message)
-
-
-
 async def process_commands(message):
     print("Processing commands\n")
-    if global_settings["enable"] == False:
-        await message.channel.send("ERROR: Commands disabled")
-        return
+    
 
     done = False
     for command in commands.keys():
-        if not done and message.content.startswith(f"/{command}"):                
+        if not done and message.content.startswith(f"/{command}"):
+            # if a command was detected but commands are disabled send error message and return
+            if global_settings["enable"] == False and str(message.author.id) != ADMIN:
+                await message.channel.send("ERROR: Commands disabled")
+                return                
+
+            # if commands aren't disabled, try to run command
             try:
                 async with message.channel.typing():
                     await commands[command]["func"](message)
@@ -252,23 +266,12 @@ async def process_commands(message):
 @client.event
 async def on_message(message):
     if not message.author.bot:
-        # try:
         await process_commands(message)
-        # except:
-            # print("ERROR FUCK YOU")
-            # await log("on_message")
-
-
-@client.event
-async def on_message_edit(before, message):
-    if not message.author.bot:
-        await process_commands(message)
-
-
 
 @client.event
 async def on_guild_join(guild):
     print(f"JOINED GUILD {guild.name}")
+    await log(f"JOINED GUILD {guild.name}")
 
 @client.event
 async def on_ready():
@@ -277,7 +280,7 @@ async def on_ready():
     print(f'Logged in as {client.user} (ID: {client.user.id})') # type: ignore
 
     for guild in client.guilds:
-        print(f'Connected to target guild: {guild.name} (ID: {guild.id})')
+        print(f'Connected to guild: {guild.name} (ID: {guild.id})')
 
     global database
     database = sqlite3.connect('tickets.db')
@@ -291,7 +294,7 @@ async def on_ready():
     if database == None:
         startup_errors.append(log_format(f"Error connecting to database"))
 
-    print('======')
+    print('======\n')
 
     for e in startup_errors:
             await error_logging_obj.send(e)
