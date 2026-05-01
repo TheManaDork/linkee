@@ -113,9 +113,31 @@ async def command_uploadLinks(message):
         for link in links:
             database.execute("INSERT INTO tickets (link, used) VALUES (?,?)", (link, False))
 
-
     print(f"Added {len(links)} links to tickets")
-    message.channel.send(f"Added {len(links)} links!")
+    await message.channel.send(f"Added {len(links)} links!")
+
+
+async def command_uploadAsbesties(message):
+    if str(message.author.id) != ADMIN:
+        await message.channel.send("You do not have the permissions to use this command")
+        return
+
+    if len(message.attachments) != 1:
+        await message.channel.send("Command must be sent with one attachment")
+        return
+    r = requests.get(message.attachments[0].url)
+    IDs = r.text.split('\n')
+    IDs = [ID.strip() for ID in IDs if ID.strip()]
+
+    with database:
+        for ID in IDs:
+            if not ID.isnumeric():
+                print(ID)
+                continue
+            database.execute("INSERT INTO asbesties (id) VALUES (?)", (ID,))
+
+    print(f"Added {len(IDs)} IDs!")
+    await message.channel.send(f"Added {len(IDs)} IDs!")
 
 
 async def command_vote(message):
@@ -127,6 +149,16 @@ async def command_vote(message):
         else:
             print("WARNING: Is public", flush=True)
             await message.channel.send("ERROR: Command can only be used in DM's.")
+            return
+
+        # check user is an asbestie
+        output = database.execute("SELECT id FROM asbesties WHERE id=?", (str(message.author.id),)).fetchall()
+
+        if len(output) < 1:
+            await message.channel.send("""
+                You must be a member of the Asbestos Pool Swimming Club in order to vote. 
+                If you feel that you are a member of the Asbestos Pool Swimming Club, please reach out to the organizers of this election.
+                """)
             return
 
         # check user has not voted before
@@ -214,7 +246,7 @@ async def command_enable(message):
         await message.channel.send("You do not have the permissions to use this command")
         return
     global_settings["enable"] = True
-    message.channel.send("Bot commands enabled")
+    await message.channel.send("Bot commands enabled")
 
 
 async def command_disable(message):
@@ -222,11 +254,12 @@ async def command_disable(message):
         await message.channel.send("You do not have the permissions to use this command")
         return
     global_settings["disable"] = False
-    message.channel.send("Bot commands disabled")
+    await message.channel.send("Bot commands disabled")
 
 
 commands = {
     "uploadLinks":{"enable":True, "func":command_uploadLinks}, # ADMIN only
+    "uploadAsbesties":{"enable":True, "func":command_uploadAsbesties}, # ADMIN only
     "vote":{"enable":True, "func":command_vote},
     # "getData":{"enable":True, "func":command_getData},       # ADMIN only
     "info":{"enable":True, "func":command_info},
@@ -289,6 +322,7 @@ async def on_ready():
     with database:
         database.execute("CREATE TABLE IF NOT EXISTS tickets (link TEXT PRIMARY KEY, used BOOL NOT NULL)")
         database.execute("CREATE TABLE IF NOT EXISTS voters (id TEXT PRIMARY KEY)")
+        database.execute("CREATE TABLE IF NOT EXISTS asbesties (id TEXT PRIMARY KEY)")
 
 
     if database == None:
