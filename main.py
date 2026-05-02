@@ -146,8 +146,8 @@ async def command_vote(message):
 
         if len(output) < 1:
             await message.channel.send("""
-                You must be a member of the Asbestos Pool Swimming Club in order to vote. 
-                If you feel that you are a member of the Asbestos Pool Swimming Club, please reach out to the organizers of this election.
+You must be a member of the Asbestos Pool Swimming Club in order to vote. 
+If you feel that you are a member of the Asbestos Pool Swimming Club, please reach out to the organizers of this election.
                 """)
             return
 
@@ -157,7 +157,7 @@ async def command_vote(message):
        
         if len(output) > 0:
             await message.channel.send(""" 
-                You have already received your voting link. You cannot get another one. If you were unable to vote with the link you were given or if this is the first time you have requested a link, please contact Graydon Bush, username TheManaDorh
+You have already received your voting link. You cannot get another one. If you were unable to vote with the link you were given or if this is the first time you have requested a link, please contact Graydon Bush, username TheManaDorh
                 """)
             return
 
@@ -166,7 +166,7 @@ async def command_vote(message):
 
         if output == None:
             await message.channel.send("""
-                It seems we have run out of voting tickets. If you have not yet voted and feel you should get to, please reach out to those in charge of this vote.
+It seems we have run out of voting tickets. If you have not yet voted and feel you should get to, please reach out to those in charge of this vote.
                 """)
             return
 
