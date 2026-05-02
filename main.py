@@ -31,8 +31,6 @@ def log_format(details="",channel="",level=0,error=True):
         out=f':x: ERROR (Asby V2):\n```{traceback.format_exc()}```{channel}{other_info}'
     else:
         out=f':green_circle: LOG (Asby V2):\n```{traceback.format_exc()}```{channel}{other_info}'
-    if TC_Enable:
-        print("-----------------\n"+termcolor.colored(out,["red","yellow","green"][max(0,min(level,2))]))  #print error/log info in 
     return out
 
 async def log(details="",channel="",level=0,error=True):
@@ -47,14 +45,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-
-
-try:
-    import termcolor
-    TC_Enable=True
-except:
-    startup_errors.append(log_format(f'Error importing lib termcolor (non-fatal; using colorless logging).',level=1))
-
 
 
 #==================Variable Inits==================-
