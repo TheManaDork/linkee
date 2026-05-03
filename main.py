@@ -34,7 +34,9 @@ def log_format(details="",channel="",level=0,error=True):
     return out
 
 async def log(details="",channel="",level=0,error=True):
-    await error_logging_obj.send(log_format(details,channel,level,error))
+    output = log_format(details,channel,level,error)
+    print(output)
+    await error_logging_obj.send(output)
 
 
 #==================Import Libs======================
@@ -83,11 +85,13 @@ except:
  #========================== Command Methods =====================================================
 
 async def command_sayHi(message):
+    print("sayHi", flush=True)
     await message.channel.send("Saying hi! From Graydon's computer!")
     print("Someone said hi! I'm alive!", flush=True)   
 
 
 async def command_uploadLinks(message):
+    print("uploadLinks", flush=True)
     if str(message.author.id) != ADMIN:
         await message.channel.send("You do not have the permissions to use this command")
         return
@@ -104,15 +108,20 @@ async def command_uploadLinks(message):
     # for link in links:
     #     print(f"{link}\n")
 
-    with database:
-        for link in links:
-            database.execute("INSERT INTO tickets (link, used) VALUES (?,?)", (link, False))
+    try:
+        with database:
+            for link in links:
+                database.execute("INSERT INTO tickets (link, used) VALUES (?,?)", (link, False))
+    except:
+        await message.channel.send("A problem occured while uploading links.")
 
     print(f"Added {len(links)} links to tickets", flush=True)
     await message.channel.send(f"Added {len(links)} links!")
 
 
 async def command_uploadAsbesties(message):
+    print("uploadAsbesties", flush=True)
+
     if str(message.author.id) != ADMIN:
         await message.channel.send("You do not have the permissions to use this command")
         return
@@ -136,7 +145,7 @@ async def command_uploadAsbesties(message):
 
 
 async def command_vote(message):
-    print("voting...", flush=True)
+    print("vote", flush=True)
     try:
         # check environment
         if isinstance(message.author, discord.User):
@@ -219,6 +228,7 @@ For details on the system of voting we are using please use the command '/info'
 
 
 async def command_info(message):
+    print("info", flush=True)
     # await message.channel.send("ERROR: This command is incomplete. Please contact Graydon Bush to rectify this.")
     await message.channel.send("""
 We are voting to elect ***7*** moderators.
@@ -231,12 +241,14 @@ At the end of the voting period, the 7 people with the highest number of total v
 
 
 async def command_numVotes(message):
+    print("numVotes", flush=True)
     with database:
         rows = database.execute("SELECT used FROM tickets WHERE used=?", (True,)).fetchall()
     await message.channel.send(f"{len(rows)} voting link(s) have been sent.")
 
 
 async def command_enable(message):
+    print("enable", flush=True)
     if str(message.author.id) != ADMIN:
         await message.channel.send("You do not have the permissions to use this command")
         return
@@ -245,6 +257,7 @@ async def command_enable(message):
 
 
 async def command_disable(message):
+    print("disable", flush=True)
     if str(message.author.id) != ADMIN:
         await message.channel.send("You do not have the permissions to use this command")
         return
@@ -263,7 +276,6 @@ commands = {
     "enable":{"enable":True, "func":command_enable},           # ADMIN only
     "disable":{"enable":True, "func":command_disable}          # ADMIN only
     }
-
 
 
 #==================Message Handler======================
