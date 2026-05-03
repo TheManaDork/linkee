@@ -108,7 +108,7 @@ async def command_uploadLinks(message):
         for link in links:
             database.execute("INSERT INTO tickets (link, used) VALUES (?,?)", (link, False))
 
-    print(f"Added {len(links)} links to tickets")
+    print(f"Added {len(links)} links to tickets", flush=True)
     await message.channel.send(f"Added {len(links)} links!")
 
 
@@ -131,7 +131,7 @@ async def command_uploadAsbesties(message):
                 continue
             database.execute("INSERT INTO asbesties (id) VALUES (?)", (ID,))
 
-    print(f"Added {len(IDs)} IDs!")
+    print(f"Added {len(IDs)} IDs!", flush=True)
     await message.channel.send(f"Added {len(IDs)} IDs!")
 
 
@@ -196,7 +196,7 @@ For details on the system of voting we are using please use the command '/info'
             database.execute("INSERT INTO voters (id) VALUES (?)", (str(message.author.id),))
     
     except Exception as e:
-        print(e)
+        print(e, flush=True)
         await log(f"Error running /vote.",channel=message.channel)
         await log(f"Error running /vote.")
 
@@ -269,7 +269,7 @@ commands = {
 #==================Message Handler======================
 
 async def process_commands(message):
-    print("Processing commands\n")
+    print("Processing commands\n", flush=True)
     
 
     done = False
@@ -299,7 +299,7 @@ async def on_message(message):
 
 @client.event
 async def on_guild_join(guild):
-    print(f"JOINED GUILD {guild.name}")
+    print(f"JOINED GUILD {guild.name}", flush=True)
     await log(f"JOINED GUILD {guild.name}")
 
 @client.event
@@ -313,7 +313,7 @@ async def on_ready():
 
     global database
     database = sqlite3.connect('tickets.db')
-    print(f"Connected to database: {database}")
+    print(f"Connected to database: {database}", flush=True)
 
     with database:
         database.execute("CREATE TABLE IF NOT EXISTS tickets (link TEXT PRIMARY KEY, used BOOL NOT NULL)")
@@ -324,7 +324,7 @@ async def on_ready():
     if database == None:
         startup_errors.append(log_format(f"Error connecting to database"))
 
-    print('======\n')
+    print('======\n', flush=True)
 
     for e in startup_errors:
             await error_logging_obj.send(e)
