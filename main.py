@@ -82,6 +82,10 @@ except:
 
  #========================== Command Methods =====================================================
 
+async def command_sayHi(message):
+    message.channel.send("Saying hi!")
+
+
 async def command_uploadLinks(message):
     if str(message.author.id) != ADMIN:
         await message.channel.send("You do not have the permissions to use this command")
@@ -248,6 +252,7 @@ async def command_disable(message):
 
 
 commands = {
+    "sayHi":{"enable":True, "func":command_sayHi},
     "uploadLinks":{"enable":True, "func":command_uploadLinks}, # ADMIN only
     "uploadAsbesties":{"enable":True, "func":command_uploadAsbesties}, # ADMIN only
     "vote":{"enable":True, "func":command_vote},
