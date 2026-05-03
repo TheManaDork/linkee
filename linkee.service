@@ -7,4 +7,4 @@ WorkingDirectory=/home/graydon/Desktop/github/linkee
 ExecStart=python3 main.py
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
