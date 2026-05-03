@@ -240,6 +240,20 @@ At the end of the voting period, the 7 people with the highest number of total v
         """)
 
 
+async def command_introduce(message):
+    print("introduce", flush=True)
+    await message.channel.send("""
+Hello! My name's Linkee, and I'm a voting bot!
+To vote in this election please DM me the command '/vote' and I'll send you a single-use link you can use to vote!
+You can click the link multiple times, to be clear, but via that link you can only fill out the voting form once.
+I'll only send you one link though so please try to make good use of it!
+
+Hearts <3,
+Linkee
+Code.org, May '22
+        """)
+
+
 async def command_numVotes(message):
     print("numVotes", flush=True)
     with database:
@@ -272,6 +286,7 @@ commands = {
     "vote":{"enable":True, "func":command_vote},
     # "getData":{"enable":True, "func":command_getData},       # ADMIN only
     "info":{"enable":True, "func":command_info},
+    "introduce":{"enable":True, "func":command_introduce},
     "numVotes":{"enable":True, "func":command_numVotes},
     "enable":{"enable":True, "func":command_enable},           # ADMIN only
     "disable":{"enable":True, "func":command_disable}          # ADMIN only
