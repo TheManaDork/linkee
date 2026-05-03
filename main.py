@@ -246,7 +246,7 @@ async def command_introduce(message):
 Hello! My name's Linkee, and I'm a voting bot!
 To vote in this election please DM me the command '/vote' and I'll send you a single-use link you can use to vote!
 You can click the link multiple times, to be clear, but via that link you can only fill out the voting form once.
-I'll only send you one link though so please try to make good use of it!
+And I'll only ever send you one link so please try to make good use of it!
 
 Hearts <3,
 Linkee
