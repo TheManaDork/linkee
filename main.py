@@ -84,6 +84,7 @@ except:
 
 async def command_sayHi(message):
     await message.channel.send("Saying hi! From Graydon's computer!")
+    print("Someone said hi! I'm alive!")
 
 
 async def command_uploadLinks(message):
