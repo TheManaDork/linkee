@@ -161,7 +161,7 @@ async def command_vote(message):
         if len(output) < 1:
             await message.channel.send("""
 You must be a member of the Asbestos Pool Swimming Club in order to vote. 
-If you feel that you are a member of the Asbestos Pool Swimming Club, please reach out to the organizers of this election.
+If you are a member of the Asbestos Pool Swimming Club, please reach out to the organizers of this election.
                 """)
             return
 
