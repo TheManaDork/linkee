@@ -83,7 +83,7 @@ except:
  #========================== Command Methods =====================================================
 
 async def command_sayHi(message):
-    await message.channel.send("Saying hi!")
+    await message.channel.send("Saying hi! From Graydon's computer!")
 
 
 async def command_uploadLinks(message):
