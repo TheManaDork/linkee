@@ -135,7 +135,6 @@ async def on_guild_join(guild):
 @client.event
 async def on_ready():
 
-    print("CWD:", os.getcwd())
     set_up_log()
 
     print(f'Logged in as {client.user} (ID: {client.user.id})') # type: ignore
