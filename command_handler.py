@@ -2,7 +2,8 @@ import __main__ as _m
 import settings as _s
 import quotes_etc as _q
 
-from datetime import datetime
+from dateutil.parser import isoparse
+
 # async def command_getData(message):
 #     if str(message.author.id) != ADMIN:
 #         await message.channel.send("You do not have the permissions to use this command")
@@ -481,7 +482,7 @@ async def command_messageHistory(message):
 
                 # find and send specified user's message history
                 if name in _m.perma_data["last_message_dates"]: 
-                    await message.channel.send("\# of messages stored: " + str(len(_m.perma_data["last_message_dates"][name])) + "\n" + str([_m.datetime.fromisoformat(d).strftime("%x @ %I:%M %p") for d in _m.perma_data["last_message_dates"][name]]))
+                    await message.channel.send("\# of messages stored: " + str(len(_m.perma_data["last_message_dates"][name])) + "\n" + str([isoparse(d).strftime("%x @ %I:%M %p") for d in _m.perma_data["last_message_dates"][name]]))
                 else:
                     await message.channel.send("userId " + str(name) + " is not recognized")
                     return
