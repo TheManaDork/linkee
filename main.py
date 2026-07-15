@@ -1,14 +1,14 @@
 startup_errors = []
-database = None
+# schedule_errors = []
 TOKEN = None
-ADMIN = None
-global_settings = {"enable":True}
 
 #==================Error Logging Imports====================
 import traceback
 
 #==================Settings====================
-error_logging_channel = 1499507490436677813
+import settings as _s # annoyed this can't go in Import Files but _s.init() needs to be run before quotes_etc
+_s.init()
+error_logging_channel = _s.error_logging_channel
 error_logging_obj = None
 # devchannel_id = 1279148032142868593
 
@@ -28,9 +28,9 @@ def log_format(details="",channel="",level=0,error=True):
         except Exception as e:
             channel = f"\nError getting channel ID. Channel input = {channel}\nLogging error: {e}"
     if error:
-        out=f':x: ERROR (Asby V2):\n```{traceback.format_exc()}```{channel}{other_info}'
+        out=f':x: ERROR:\n```{traceback.format_exc()}```{channel}{other_info}'
     else:
-        out=f':green_circle: LOG (Asby V2):\n```{traceback.format_exc()}```{channel}{other_info}'
+        out=f':green_circle: LOG:\n```{traceback.format_exc()}```{channel}{other_info}'
     return out
 
 async def log(details="",channel="",level=0,error=True):
@@ -41,27 +41,11 @@ async def log(details="",channel="",level=0,error=True):
 
 #==================Import Libs======================
 
-import os
-import sys
-import discord
+import os, sys, discord, pickle, datetime, random, threading, uuid, time, asyncio
+import regex as re
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-
-
-#==================Variable Inits==================-
-
-
-load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
-ADMIN = str(os.getenv("OPPED_USER"))
-
-intents = discord.Intents.default()
-intents.messages = True
-intents.message_content = True
-
-client = discord.Client(intents=intents)
-
 
 
 #==================Import Helper Libs======================
@@ -82,239 +66,49 @@ except:
 
 
 
- #========================== Command Methods =====================================================
+#==================Variable Inits==================-
+load_dotenv()
 
-async def command_sayHi(message):
-    print("sayHi", flush=True)
-    await message.channel.send("Saying hi! From Graydon's computer!")
-    print("Someone said hi! I'm alive!", flush=True)   
+TOKEN = os.getenv("DISCORD_TOKEN")
+_s.ADMIN = str(os.getenv("OPPED_USER"))
+
+intents = discord.Intents.default()
+intents.messages = True
+intents.message_content = True
+intents.members = True
+
+client = discord.Client(intents=intents)
 
 
-async def command_uploadLinks(message):
-    print("uploadLinks", flush=True)
-    if str(message.author.id) != ADMIN:
-        await message.channel.send("You do not have the permissions to use this command")
-        return
 
-    if len(message.attachments) != 1:
-        await message.channel.send("Command must be sent with one attachment")
-        return
+#==================Import Files======================
+import command_handler
+import quotes_etc
+import helper
+import activityTracker as tracker
+import scheduler
 
-    r = requests.get(message.attachments[0].url)
 
-    links = r.text.split('\n')
-    links = [link.strip() for link in links if link.strip()]
 
-    # for link in links:
-    #     print(f"{link}\n")
+#==================Load Sticky Data==================
+perma_data = {"reverse_enable":dict,"quote_mutes":list,"all_quotes":list,"user_ids":dict,"tasks":list, "last_message_dates":dict, "quad_alarms": dict, "ignoredUsers":set} #last_message_dates will = dict{user_ids:list(timestamps)}
 
+
+for v in perma_data.keys():
     try:
-        with database:
-            for link in links:
-                database.execute("INSERT INTO tickets (link, used) VALUES (?,?)", (link, False))
+        with open(f'pickle_files/{v}.pkl', 'rb') as f:
+            perma_data[v] = pickle.load(f)
     except:
-        await message.channel.send("A problem occured while uploading links.")
-
-    print(f"Added {len(links)} links to tickets", flush=True)
-    await message.channel.send(f"Added {len(links)} links!")
+        perma_data[v] = perma_data[v]()
 
 
-async def command_uploadAsbesties(message):
-    print("uploadAsbesties", flush=True)
-
-    if str(message.author.id) != ADMIN:
-        await message.channel.send("You do not have the permissions to use this command")
-        return
-
-    if len(message.attachments) != 1:
-        await message.channel.send("Command must be sent with one attachment")
-        return
-    r = requests.get(message.attachments[0].url)
-    IDs = r.text.split('\n')
-    IDs = [ID.strip() for ID in IDs if ID.strip()]
-
-    with database:
-        for ID in IDs:
-            if not ID.isnumeric():
-                print(ID)
-                continue
-            database.execute("INSERT INTO asbesties (id) VALUES (?)", (ID,))
-
-    print(f"Added {len(IDs)} IDs!", flush=True)
-    await message.channel.send(f"Added {len(IDs)} IDs!")
+#==================Start Stuff W/ Dependencies==================
+try:
+    scheduler.start()
+except:
+    startup_errors.append(log_format(f'Error starting scheduler.'))
 
 
-async def command_vote(message):
-    print("vote", flush=True)
-    try:
-        # check environment
-        if isinstance(message.author, discord.User):
-            print("Is private!", flush=True)
-        else:
-            print("WARNING: Is public", flush=True)
-            await message.channel.send("ERROR: Command can only be used in DM's.")
-            return
-
-        # check user is an asbestie
-        output = database.execute("SELECT id FROM asbesties WHERE id=?", (str(message.author.id),)).fetchall()
-
-        if len(output) < 1:
-            await message.channel.send("""
-You must be a member of the Asbestos Pool Swimming Club in order to vote. 
-If you are a member of the Asbestos Pool Swimming Club, please reach out to the organizers of this election.
-                """)
-            return
-
-        # check user has not voted before
-        output = database.execute("SELECT id FROM voters WHERE id=?", (str(message.author.id),)).fetchall()
-
-       
-        if len(output) > 0:
-            await message.channel.send(""" 
-You have already received your voting link. You cannot get another one. If you were unable to vote with the link you were given or if this is the first time you have requested a link, please contact Graydon Bush, username TheManaDorh
-                """)
-            return
-
-        # retrieve voting link and mark link as used
-        output = database.execute("UPDATE tickets SET used = TRUE WHERE link = (SELECT link FROM tickets WHERE used = FALSE LIMIT 1) RETURNING link;").fetchone()
-
-        if output == None:
-            await message.channel.send("""
-It seems we have run out of voting tickets. If you have not yet voted and feel you should get to, please reach out to those in charge of this vote.
-                """)
-            return
-
-        link = output[0]
-
-        await message.channel.send(f"""
-Click [here](<{link}>) to vote!
-
-NOTE: This is the only link you can receive via this command. If this link says it has already been used or otherwise is not working then please contact 
-Those in charge of this vote. Due to the need to preserve privacy, anonymity, and preventing cheating, there is no good way for us to know your link is broken,
-If you have voted or not, or help you vote if you don't find someone in person and show this to them.
-
-The decisions you make while filling out this form are entirely anonymous and should not be shared with anyone.
-For details on the system of voting we are using please use the command '/info'
-
--# We at the Asbestos Management Team are legally not liable for any damages to life, limb, or marriage contracts as a result of clicking the above link
--# Known side effects include: democracy, Emma, golden honmoon, the Demon King declaring victory, acne, pregnancy, sudden heart attack, an odd feeling of weightlessness
-            """)
-
-        # mark user as having voted
-        with database:
-            database.execute("INSERT INTO voters (id) VALUES (?)", (str(message.author.id),))
-    
-    except Exception as e:
-        print(e, flush=True)
-        await log(f"Error running /vote.",channel=message.channel)
-        await log(f"Error running /vote.")
-
-
-
-# async def command_getData(message):
-#     if str(message.author.id) != ADMIN:
-#         await message.channel.send("You do not have the permissions to use this command")
-#         return
-#     with database:
-#         rows = database.execute("SELECT * FROM tickets LIMIT 10").fetchall()
-
-#     output = ""
-#     for row in rows:
-#         output += str(row) + "\n"
-
-#     print(output)
-#     await message.channel.send(output)
-
-
-
-async def command_info(message):
-    print("info", flush=True)
-    # await message.channel.send("ERROR: This command is incomplete. Please contact Graydon Bush to rectify this.")
-    await message.channel.send("""
-We are voting to elect ***7*** moderators.
-In the first question in the form you may vote for up to ***5*** people you believe have the qualities a moderator needs (good at conflict resolution, impartial, etc). A vote of confidence.
-In the second question in the form you may vote for up to ***2*** people you believe do not have the qualities a moderator needs. A vote of no-confidence.
-These ***2*** votes will count as negative votes, so if someone have 5 votes of confidence and 2 votes of no-confidence they will be considered to have 3 total votes.
-
-At the end of the voting period, the 7 people with the highest number of total votes (total votes = # of confidence votes - # of no-confidence votes) will be our moderators.
-        """)
-
-
-async def command_introduce(message):
-    print("introduce", flush=True)
-    await message.channel.send("""
-Hello! My name's Linkee, and I'm a voting bot!
-To vote in this election please DM me the command '/vote' and I'll send you a single-use link you can use to vote!
-You can click the link multiple times, to be clear, but via that link you can only fill out the voting form once.
-And I'll only ever send you one link so please try to make good use of it!
-
-Hearts <3,
-Linkee
-Code.org, May '22
-        """)
-
-
-async def command_numVotes(message):
-    print("numVotes", flush=True)
-    with database:
-        rows = database.execute("SELECT used FROM tickets WHERE used=?", (True,)).fetchall()
-    await message.channel.send(f"{len(rows)} voting link(s) have been sent.")
-
-
-async def command_enable(message):
-    print("enable", flush=True)
-    if str(message.author.id) != ADMIN:
-        await message.channel.send("You do not have the permissions to use this command")
-        return
-    global_settings["enable"] = True
-    await message.channel.send("Bot commands enabled")
-
-
-async def command_disable(message):
-    print("disable", flush=True)
-    if str(message.author.id) != ADMIN:
-        await message.channel.send("You do not have the permissions to use this command")
-        return
-    global_settings["disable"] = False
-    await message.channel.send("Bot commands disabled")
-
-
-commands = {
-    "sayHi":{"enable":True, "func":command_sayHi},
-    "uploadLinks":{"enable":True, "func":command_uploadLinks}, # ADMIN only
-    "uploadAsbesties":{"enable":True, "func":command_uploadAsbesties}, # ADMIN only
-    "vote":{"enable":True, "func":command_vote},
-    # "getData":{"enable":True, "func":command_getData},       # ADMIN only
-    "info":{"enable":True, "func":command_info},
-    "introduce":{"enable":True, "func":command_introduce},
-    "numVotes":{"enable":True, "func":command_numVotes},
-    "enable":{"enable":True, "func":command_enable},           # ADMIN only
-    "disable":{"enable":True, "func":command_disable}          # ADMIN only
-    }
-
-
-#==================Message Handler======================
-
-async def process_commands(message):
-    print("Processing commands\n", flush=True)
-    
-
-    done = False
-    for command in commands.keys():
-        if not done and message.content.startswith(f"/{command}"):
-            # if a command was detected but commands are disabled send error message and return
-            if global_settings["enable"] == False and str(message.author.id) != ADMIN:
-                await message.channel.send("ERROR: Commands disabled")
-                return                
-
-            # if commands aren't disabled, try to run command
-            try:
-                async with message.channel.typing():
-                    await commands[command]["func"](message)
-                    done = True
-            except:
-                await log(f"Error running command {command}.",channel=message.channel)
- 
 
 #==================-Client Events==================-
 
@@ -322,7 +116,16 @@ async def process_commands(message):
 @client.event
 async def on_message(message):
     if not message.author.bot:
-        await process_commands(message)
+        # print(type(message.created_at))
+        print(f"{message.created_at:%b-%d, %I:%m %p} [{message.channel}] <{message.author.display_name[:50]}> \"{message.content[:100]}\"")
+
+        try:
+            await tracker.trackActivity(message)
+        except Exception as e:
+            await log("Error calling trackActivity:\n" + str(e))
+
+        await command_handler.process_commands(message)
+        await quotes_etc.go(message)
 
 @client.event
 async def on_guild_join(guild):
@@ -338,17 +141,16 @@ async def on_ready():
     for guild in client.guilds:
         print(f'Connected to guild: {guild.name} (ID: {guild.id})')
 
-    global database
-    database = sqlite3.connect('tickets.db')
-    print(f"Connected to database: {database}", flush=True)
+    # global database
+    _s.database = sqlite3.connect('tickets.db')
+    print(f"Connected to database: {_s.database}", flush=True)
 
-    with database:
-        database.execute("CREATE TABLE IF NOT EXISTS tickets (link TEXT PRIMARY KEY, used BOOL NOT NULL)")
-        database.execute("CREATE TABLE IF NOT EXISTS voters (id TEXT PRIMARY KEY)")
-        database.execute("CREATE TABLE IF NOT EXISTS asbesties (id TEXT PRIMARY KEY)")
+    with _s.database:
+        _s.database.execute("CREATE TABLE IF NOT EXISTS tickets (link TEXT PRIMARY KEY, used BOOL NOT NULL)")
+        _s.database.execute("CREATE TABLE IF NOT EXISTS voters (id TEXT PRIMARY KEY)")
+        _s.database.execute("CREATE TABLE IF NOT EXISTS asbesties (id TEXT PRIMARY KEY)")
 
-
-    if database == None:
+    if _s.database == None:
         startup_errors.append(log_format(f"Error connecting to database"))
 
     print('======\n', flush=True)
