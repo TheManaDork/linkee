@@ -2,6 +2,7 @@ import __main__ as _m
 import settings as _s
 import quotes_etc as _q
 
+from datetime import datetime
 # async def command_getData(message):
 #     if str(message.author.id) != ADMIN:
 #         await message.channel.send("You do not have the permissions to use this command")
