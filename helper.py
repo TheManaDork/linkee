@@ -24,6 +24,15 @@ def count_user_quotes(user_id):
     return count
 
 
+def count_user_authoring(user_id):
+    u = str(user_id)
+    count = 0
+    for q, g, a in  _m.perma_data["all_quotes"]:
+        if u == str(a):
+            count+=1
+    return count
+
+
 def to_emoji_num(num):
     num=str(int(num)+1)
     number_emojis = ":zero: :one: :two: :three: :four: :five: :six: :seven: :eight: :nine:".split(" ")
