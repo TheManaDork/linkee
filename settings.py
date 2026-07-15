@@ -16,4 +16,7 @@ def init():
 	global error_logging_channel
 	error_logging_channel = 1499507490436677813
 
+	global command_prefix
+	command_prefix = "a!"
+
 

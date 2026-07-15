@@ -565,7 +565,7 @@ async def process_commands(message):
     print("Processing commands\n", flush=True)
     done = False
     for command in commands.keys():
-        if not done and message.content.startswith(f"/{command}"):
+        if not done and message.content.startswith(f"{_s.command_prefix}{command}"):
             # if a command was detected but commands are disabled send error message and return
             if _s.settings["enable"] == False and str(message.author.id) != _s.ADMIN:
                 await message.channel.send("ERROR: Commands disabled")
