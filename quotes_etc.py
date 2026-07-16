@@ -85,9 +85,10 @@ async def add_quote(message,*extra,**extra2):
     all_quotes = _m.perma_data["all_quotes"] #this is just a reference, so editing all_quotes here changes the one back in _m.perma_data["all_quotes"] as well
     
     try:
-        if message.channel.id in [quotes_channel] and any([x in message.content for x in '“"”']):
+        if message.channel.id is quotes_channel and any([x in message.content for x in '“"”']):
             all_quotes.append((message.content,message.guild.id,message.author.id))
             _m.helper.save_sticky_data("all_quotes")
+            print("Quote recorded")
     except Exception as e:
         await _m.log(channel=message.channel)
 

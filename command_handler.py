@@ -548,7 +548,7 @@ commands = {
 # Quote Commands
     "quote":{"enable":True, "func":command_quote},
     "new_user_ids":{"enable":True, "func":command_new_user_ids},
-    "daily_historic_quote":{"enable":True, "func":command_daily_quote},
+    "daily_quote":{"enable":True, "func":command_daily_quote},
     "leaderboard":{"enable":True, "func":command_leaderboard},
     "aleaderboard":{"enable":True, "func":command_aleaderboard},
     "get_all_quotes":{"enable":True, "func":command_get_all_quotes},
