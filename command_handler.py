@@ -86,7 +86,7 @@ async def command_vote(message):
     print("vote", flush=True)
     try:
         # check environment
-        if isinstance(message.author, discord.User):
+        if isinstance(message.author, _m.discord.User):
             print("Is private!", flush=True)
         else:
             print("WARNING: Is public", flush=True)
@@ -144,8 +144,8 @@ For details on the system of voting we are using please use the command '/info'
     
     except Exception as e:
         print(e, flush=True)
-        await log(f"Error running /vote.",channel=message.channel)
-        await log(f"Error running /vote.")
+        await _m.log(f"Error running /vote.",channel=message.channel)
+        await _m.log(f"Error running /vote.")
 
 
 
