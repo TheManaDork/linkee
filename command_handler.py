@@ -24,7 +24,7 @@ from dateutil.parser import isoparse
 
 async def command_sayHi(message):
     print("sayHi", flush=True)
-    await message.channel.send("Saying hi! From Graydon's computer!")
+    await message.channel.send("Saying hi! From Grayson's computer!")
     print("Someone said hi! I'm alive!", flush=True)   
 
 
@@ -38,7 +38,7 @@ async def command_uploadLinks(message):
         await message.channel.send("Command must be sent with one attachment")
         return
 
-    r = requests.get(message.attachments[0].url)
+    r = _m.requests.get(message.attachments[0].url)
 
     links = r.text.split('\n')
     links = [link.strip() for link in links if link.strip()]
@@ -67,7 +67,7 @@ async def command_uploadVoters(message):
     if len(message.attachments) != 1:
         await message.channel.send("Command must be sent with one attachment")
         return
-    r = requests.get(message.attachments[0].url)
+    r = _m.requests.get(message.attachments[0].url)
     IDs = r.text.split('\n')
     IDs = [ID.strip() for ID in IDs if ID.strip()]
 
@@ -105,11 +105,11 @@ If you are a member of the Asbestos Pool Swimming Club, please reach out to the 
 
         # check user has not voted before
         output = _s.database.execute("SELECT id FROM voters WHERE id=?", (str(message.author.id),)).fetchall()
-
+        print(f"hasVoted = {output}")
        
         if len(output) > 0:
             await message.channel.send(""" 
-You have already received your voting link. You cannot get another one. If you were unable to vote with the link you were given or if this is the first time you have requested a link, please contact Graydon Bush, username TheManaDorh
+You have already received your voting link. You cannot get another one. If you were unable to vote with the link you were given or if this is the first time you have requested a link, please contact TheManaDorh
                 """)
             return
 
@@ -141,7 +141,8 @@ For details on the system of voting we are using please use the command '/info'
         # mark user as having voted
         with _s.database:
             _s.database.execute("INSERT INTO voters (id) VALUES (?)", (str(message.author.id),))
-    
+        print(f"User {message.author.name} has now voted")
+        
     except Exception as e:
         print(e, flush=True)
         await _m.log(f"Error running /vote.",channel=message.channel)
@@ -151,7 +152,7 @@ For details on the system of voting we are using please use the command '/info'
 
 async def command_info(message):
     print("info", flush=True)
-    # await message.channel.send("ERROR: This command is incomplete. Please contact Graydon Bush to rectify this.")
+    # await message.channel.send("ERROR: This command is incomplete. Please contact TheManaDorh to rectify this.")
     await message.channel.send("""
 We are voting to elect ***7*** moderators.
 In the first question in the form you may vote for up to ***5*** people you believe have the qualities a moderator needs (good at conflict resolution, impartial, etc). A vote of confidence.
@@ -202,6 +203,9 @@ async def command_disable(message):
     await message.channel.send("Bot commands disabled")
 
 async def command_checkAdmin(message):
+    print(_s.ADMIN)
+    print([member.id for member in message.guild.members])
+
     if _s.ADMIN in [member.id for member in message.guild.members]:
         await message.channel.send(f"<@{_s.ADMIN}> is admin")
         print("Admin found")
