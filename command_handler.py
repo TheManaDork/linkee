@@ -84,9 +84,16 @@ async def command_uploadVoters(message):
 
 async def command_vote(message):
     print("vote", flush=True)
+    user = message.author
     try:
         # check environment
-        if isinstance(message.author, _m.discord.User):
+        if len(message.content.split()) > 1:
+            user = _m.client.get_user(message.content.split()[1])
+            if user == None:
+                print("ERROR: User not found")
+                await message.channel.send("ERROR: User not found")
+                return
+        elif isinstance(message.author, _m.discord.User):
             print("Is private!", flush=True)
         else:
             print("WARNING: Is public", flush=True)
@@ -94,7 +101,7 @@ async def command_vote(message):
             return
 
         # check user is an asbestie
-        output = _s.database.execute("SELECT id FROM asbesties WHERE id=?", (str(message.author.id),)).fetchall()
+        output = _s.database.execute("SELECT id FROM asbesties WHERE id=?", (str(user.id),)).fetchall()
 
         if len(output) < 1:
             await message.channel.send("""
@@ -104,7 +111,7 @@ If you are a member of the Asbestos Pool Swimming Club, please reach out to the 
             return
 
         # check user has not voted before
-        output = _s.database.execute("SELECT id FROM voters WHERE id=?", (str(message.author.id),)).fetchall()
+        output = _s.database.execute("SELECT id FROM voters WHERE id=?", (str(user.id),)).fetchall()
         print(f"hasVoted = {output}")
        
         if len(output) > 0:
@@ -124,7 +131,7 @@ It seems we have run out of voting tickets. If you have not yet voted and feel y
 
         link = output[0]
 
-        await message.channel.send(f"""
+        message = f"""
 Click [here](<{link}>) to vote!
 
 NOTE: This is the only link you can receive via this command. If this link says it has already been used or otherwise is not working then please contact 
@@ -136,12 +143,17 @@ For details on the system of voting we are using please use the command '/info'
 
 -# We at the Asbestos Management Team are legally not liable for any damages to life, limb, or marriage contracts as a result of clicking the above link
 -# Known side effects include: democracy, Emma, golden honmoon, the Demon King declaring victory, acne, pregnancy, sudden heart attack, an odd feeling of weightlessness
-            """)
+            """
+
+        if not user:
+            await message.channel.send(message)
+        else:
+            await user.send(message)
 
         # mark user as having voted
         with _s.database:
-            _s.database.execute("INSERT INTO voters (id) VALUES (?)", (str(message.author.id),))
-        print(f"User {message.author.name} has now voted")
+            _s.database.execute("INSERT INTO voters (id) VALUES (?)", (str(user.id),))
+        print(f"User {user.name} has now voted")
         
     except Exception as e:
         print(e, flush=True)
