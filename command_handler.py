@@ -2,6 +2,7 @@ import __main__ as _m
 import settings as _s
 import quotes_etc as _q
 
+
 from dateutil.parser import isoparse
 
 # async def command_getData(message):
@@ -88,7 +89,8 @@ async def command_vote(message):
     try:
         # check environment
         if len(message.content.split()) > 1:
-            user = get(_m.client.get_all_members(), id=message.content.split()[1])
+            print(await _m.client.fetch_user(int(message.content.split()[1])))
+            user = await _m.client.fetch_user(int(message.content.split()[1]))
             if user == None:
                 print("ERROR: User not found")
                 await message.channel.send("ERROR: User not found")
@@ -99,7 +101,7 @@ async def command_vote(message):
             print("WARNING: Is public", flush=True)
             await message.channel.send("ERROR: Command can only be used in DM's.")
             return
-
+        
         # check user is an asbestie
         output = _s.database.execute("SELECT id FROM asbesties WHERE id=?", (str(user.id),)).fetchall()
 
