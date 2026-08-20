@@ -88,7 +88,7 @@ async def command_vote(message):
     try:
         # check environment
         if len(message.content.split()) > 1:
-            user = _m.client.get_user(message.content.split()[1])
+            user = get(_m.client.get_all_members(), id=message.content.split()[1])
             if user == None:
                 print("ERROR: User not found")
                 await message.channel.send("ERROR: User not found")
