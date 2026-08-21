@@ -101,7 +101,7 @@ async def command_vote(message):
             print("WARNING: Is public", flush=True)
             await message.channel.send("ERROR: Command can only be used in DM's.")
             return
-        
+
         # check user is an asbestie
         output = _s.database.execute("SELECT id FROM asbesties WHERE id=?", (str(user.id),)).fetchall()
 
@@ -133,7 +133,7 @@ It seems we have run out of voting tickets. If you have not yet voted and feel y
 
         link = output[0]
 
-        message = f"""
+        text = f"""
 Click [here](<{link}>) to vote!
 
 NOTE: This is the only link you can receive via this command. If this link says it has already been used or otherwise is not working then please contact 
@@ -148,9 +148,9 @@ For details on the system of voting we are using please use the command '/info'
             """
 
         if not user:
-            await message.channel.send(message)
+            await message.channel.send(text)
         else:
-            await user.send(message)
+            await user.send(text)
 
         # mark user as having voted
         with _s.database:
